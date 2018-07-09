@@ -1,0 +1,91 @@
+<html>
+<style>
+    table {
+        border-collapse: collapse;
+        border: 2px black solid;
+        font: 12px sans-serif;
+    }
+    td {
+        border: 1px black solid;
+        padding: 5px;
+    }
+</style>
+<body>
+<input type="file" id="fileinput"/>
+<table contenteditable id="result"></table>
+<script type="text/javascript">
+    function parseCsv(data) {
+        var table = document.getElementById("result")
+        var lines = data.split("\n"),
+            i;
+        for (i = 0; i < lines.length - 1; i++) {
+            var row = table.insertRow(-1);
+            lines[i].split(",").forEach(function (value) {
+                var cell = row.insertCell(-1);
+                cell.innerHTML = value;
+            })
+        }
+    }
+    document.getElementById('fileinput').addEventListener('change', function readFile(evt) {
+        var file = evt.target.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = (function () {
+                return function (e) {
+                    var contents = e.target.result;
+                    parseCsv(contents);
+                };
+            })(file);
+            reader.readAsText(file);
+        } else {
+            alert("Failed to load files");
+        }
+    });
+
+</script>
+</body>
+<input id="submit" type="button" value="Submit"/>
+<table id="calculatedTable"></table>
+<script type="text/javascript">
+    document.getElementById("submit").onclick = function () {
+        document.getElementById('calculatedTable').innerHTML = (function () {
+            var initialTable = document.getElementById("result");
+            var lastTAble = initialTable.cloneNode(true);
+            return checkValues(lastTAble).innerHTML
+        })()
+    };
+    function checkValues(initialTable) {
+        var i, j;
+        for (i = 0; i < initialTable.rows.length; i++) {
+            for (j = 0; j < initialTable.rows[i].cells.length; j++) {
+                if (initialTable.rows[i].cells[j].innerText == 0) {
+                    initialTable = Interpolation(initialTable, i, j)
+                }
+            }
+        }
+        return initialTable
+    }
+
+    function Interpolation(initialTable, i, j) {
+        //bilinear interpolation
+        if (initialTable.rows[i - 1] && initialTable.rows[i - 1].cells[j - 1]) {
+            var q11 = initialTable.rows[i - 1].cells[j - 1].innerText;
+
+        }
+        if (initialTable.rows[i + 1] && initialTable.rows[i + 1].cells[j - 1]) {
+            var q21 = initialTable.rows[i + 1].cells[j - 1].innerText;
+
+        }
+        if (initialTable.rows[i - 1] && initialTable.rows[i - 1].cells[j + 1]) {
+            var q12 = initialTable.rows[i - 1].cells[j + 1].innerText;
+
+        }
+        if (initialTable.rows[i + 1] && initialTable.rows[i + 1].cells[j + 1]) {
+            var q22 = initialTable.rows[i + 1].cells[j + 1].innerText;
+        }
+        var P = ((1 / 4) * q11 || 0) + ((1 / 4) * q21 || 0) + ((1 / 4) * q12 || 0) + ((1 / 4) * q22 || 0);
+        initialTable.rows[i].cells[j].innerText = P.toString();
+        return initialTable
+    }
+</script>
+</html>
